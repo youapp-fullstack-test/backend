@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotAcceptableException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -20,7 +20,7 @@ export class AuthService {
     const { username, email, password, confirmPassword } = registerDto;
 
     if (password != confirmPassword) {
-      throw new UnauthorizedException('Password not match');
+      throw new NotAcceptableException('Password not match');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -31,7 +31,7 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const token = this.jwtService.sign({ id: auth._id, username: auth.username, email: email });
+    const token = this.jwtService.sign({ id: auth._id, username: auth.username, email: auth.email });
 
     return { token };
   }
@@ -39,7 +39,7 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<{ token: string }> {
     const { username, password } = loginDto;
 
-    const user = await this.authModel.findOne({
+    const auth = await this.authModel.findOne({
       $or: [
         {
           username: { $regex: username, $options: "i" },
@@ -50,17 +50,17 @@ export class AuthService {
       ]
     });
 
-    if (!user) {
-      throw new UnauthorizedException('user not found');
+    if (!auth) {
+      throw new NotFoundException('user not found');
     }
 
-    const isPasswordMatched = await bcrypt.compare(password, user.password);
+    const isPasswordMatched = await bcrypt.compare(password, auth.password);
 
     if (!isPasswordMatched) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new NotAcceptableException('Invalid email or password');
     }
 
-    const token = this.jwtService.sign({ id: user._id });
+    const token = this.jwtService.sign({ id: auth._id, username: auth.username, email: auth.email });
 
     return { token };
   }

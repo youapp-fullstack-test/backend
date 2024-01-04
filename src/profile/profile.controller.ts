@@ -1,34 +1,35 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Put } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { Profile } from './entities/profile.entity';
 
 @Controller('api/profile')
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Post()
-  create(@Body() createProfileDto: CreateProfileDto) {
-    return this.profileService.create(createProfileDto);
+  @UseGuards(AuthGuard())
+  async create(@Body() createProfileDto: CreateProfileDto, @Req() req) : Promise<Profile> {
+    return this.profileService.create(createProfileDto, req.user);
   }
 
   @Get()
-  findAll() {
-    return this.profileService.findAll();
+  @UseGuards(AuthGuard())
+  async findOne(@Req() req) : Promise<any> {
+    return this.profileService.findOne(req.user);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.profileService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProfileDto: UpdateProfileDto) {
-    return this.profileService.update(+id, updateProfileDto);
+  @Put()
+  @UseGuards(AuthGuard())
+  async update(@Body() updateProfileDto: UpdateProfileDto, @Req() req) : Promise<Profile> {
+    return this.profileService.update(updateProfileDto, req.user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.profileService.remove(+id);
+  @UseGuards(AuthGuard())
+  async remove(@Param('id') id: string, @Req() req): Promise<any> {
+    return this.profileService.remove(id, req.user);
   }
 }

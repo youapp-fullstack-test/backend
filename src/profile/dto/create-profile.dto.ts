@@ -1,5 +1,6 @@
-import { ArrayMinSize, IsArray, IsNotEmpty, IsString, IsNumber } from 'class-validator';
+import { ArrayMinSize, IsArray, IsNotEmpty, IsString, IsNumber, IsEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
+import { Auth } from 'src/auth/entities/auth.entity';
 
 export class CreateProfileDto {
   @IsNotEmpty()
@@ -24,4 +25,7 @@ export class CreateProfileDto {
   @IsString({ each: true })
   @ArrayMinSize(1)
   readonly interests: string[];
+
+  @IsEmpty({ message: 'You cannot pass user id' })
+  readonly user: Auth;
 }
